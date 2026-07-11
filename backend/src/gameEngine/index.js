@@ -112,6 +112,8 @@ class GameEngineService {
       causeOfDeath: storyData.causeOfDeath,
       timeOfDeath: storyData.timeOfDeath,
       motiveSummary: storyData.motiveSummary,
+      maxRounds: game.maxRounds,
+      roundDurationMinutes: game.roundDurationMinutes,
       suspects,
       characters: assignedCharacters,
       evidence,
