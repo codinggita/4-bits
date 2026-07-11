@@ -2,7 +2,10 @@ export function buildStoryPrompt({ theme, seed, playerCount }) {
   const count = playerCount || 3;
   return `You are an AI story engine for a multiplayer murder mystery game.
 
-Generate story content using the following structure only:
+Generate story content using the following structure only. 
+IMPORTANT: The story and background must be highly detailed. You MUST clearly mention every detail, intricate motive, specific timeline of events, and well-developed secrets for the characters.
+
+Structure:
 - theme: A concise title or theme for the mystery.
 - world: A short description of the setting and atmosphere.
 - crime: A concise description of the crime.

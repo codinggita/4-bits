@@ -43,6 +43,7 @@ const evidenceSchema = new mongoose.Schema({
   location: { type: String, required: true },
   discovered: { type: Boolean, default: false },
   discoveredBy: { type: String, default: null },
+  isShared: { type: Boolean, default: false },
   linkedCharacters: [{ type: String }],
   linkedTimelineEvents: [{ type: String }],
   importance: { type: Number, default: 1, min: 1, max: 10 },

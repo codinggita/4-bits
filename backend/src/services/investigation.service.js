@@ -245,6 +245,45 @@ class InvestigationService {
         responseText = `You requested report details for "${content}" from ${target || 'the examiner'}, but the records are still pending.`;
       }
     } 
+    else if (type === 'share_clue') {
+      const clueId = (target || '').trim();
+      const foundClue = session.evidence.find(e => e.evidenceId === clueId);
+      
+      if (foundClue) {
+        foundClue.isShared = true;
+        responseText = `[CLUE SHARED] ${authorName} has shared evidence with the team: **${foundClue.name}**`;
+      } else {
+        responseText = `You attempted to share a clue, but it could not be found.`;
+      }
+    }
+    else if (type === 'deduce') {
+      const clueIds = (target || '').split(',').map(id => id.trim());
+      const clue1 = session.evidence.find(e => e.evidenceId === clueIds[0]);
+      const clue2 = session.evidence.find(e => e.evidenceId === clueIds[1]);
+      
+      if (clue1 && clue2) {
+        const prompt = `The investigator is trying to deduce something by combining these two clues:\nClue 1: ${clue1.name} - ${clue1.description}\nClue 2: ${clue2.name} - ${clue2.description}\nWrite a short, 2-sentence logical deduction about what this implies for the murder case. Keep it in the tone of a detective.`;
+        const deductionText = await this.queryAI(prompt, `By combining ${clue1.name} and ${clue2.name}, you realize they are connected.`);
+        
+        // Add deduction as a new piece of evidence
+        const newEvidence = {
+          evidenceId: 'ev_' + nanoid(10),
+          name: `Deduction: ${clue1.name} + ${clue2.name}`,
+          description: deductionText,
+          type: 'document',
+          location: 'Deduction Board',
+          discovered: true,
+          discoveredBy: authorName,
+          isShared: false, // keep it private initially
+          linkedCharacters: [...new Set([...(clue1.linkedCharacters || []), ...(clue2.linkedCharacters || [])])]
+        };
+        session.evidence.push(newEvidence);
+        
+        responseText = `[DEDUCTION] By combining the evidence, ${authorName} deduced: ${deductionText}`;
+      } else {
+        responseText = `You attempted to make a deduction, but the required evidence is missing.`;
+      }
+    }
     else {
       responseText = `Action of type "${type}" logged by the Game Master.`;
     }

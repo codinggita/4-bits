@@ -148,6 +148,11 @@ const gameHandler = (io, socket) => {
     });
   };
 
+  const handlePlayAgain = (data) => {
+    // Broadcast the new room code so everyone can join it
+    io.to(roomCode).emit('game:play-again', data);
+  };
+
   const handlePlayerSuspect = (susData) => {
     // Broadcast who this player currently suspects (pre-vote signal)
     io.to(roomCode).emit('player:suspect:updated', {
@@ -201,7 +206,11 @@ const gameHandler = (io, socket) => {
         
         // If someone is eliminated, mark them as spectator/eliminated in characters
         if (session.votingState.eliminatedId) {
-          const char = session.characters.find(c => c.playerId === session.votingState.eliminatedId);
+          const char = session.characters.find(c => 
+            c.playerId === session.votingState.eliminatedId || 
+            c.name === session.votingState.eliminatedId ||
+            c.characterId === session.votingState.eliminatedId
+          );
           if (char) {
             char.actionsRemaining = 0; // cannot act
             char.emergencyMeetingsRemaining = 0; // cannot call meetings
@@ -211,7 +220,11 @@ const gameHandler = (io, socket) => {
 
         let eliminatedRole = null;
         if (session.votingState.eliminatedId) {
-          const char = session.characters.find(c => c.playerId === session.votingState.eliminatedId);
+          const char = session.characters.find(c => 
+            c.playerId === session.votingState.eliminatedId || 
+            c.name === session.votingState.eliminatedId ||
+            c.characterId === session.votingState.eliminatedId
+          );
           if (char) {
             eliminatedRole = {
               name: char.name,
@@ -233,13 +246,14 @@ const gameHandler = (io, socket) => {
         // Game-ending condition check
         // ---------------------------------------------------------------
         const murdererChar = session.characters.find(c => c.isMurderer);
-        const murdererPlayerId = murdererChar?.playerId;
+        // The killer could be an NPC, so we need to track by name or characterId if no playerId
+        const murdererTargetId = murdererChar?.playerId || murdererChar?.name;
 
-        if (murdererPlayerId) {
+        if (murdererTargetId) {
           const allPlayers = buildAllPlayersPayload(game, session);
           const basePayload = {
             accusedId: session.votingState.eliminatedId,
-            actualKillerId: murdererPlayerId,
+            actualKillerId: murdererTargetId,
             killerName: murdererChar.name,
             killerOccupation: murdererChar.occupation,
             killerMotive: session.motiveSummary || session.solution?.motive || '',
@@ -253,13 +267,18 @@ const gameHandler = (io, socket) => {
           };
 
           let outcome = null;
-          if (session.votingState.eliminatedId === murdererPlayerId) {
+          // Check if eliminated ID matches the killer's ID or name
+          if (
+            session.votingState.eliminatedId === murdererChar.playerId ||
+            session.votingState.eliminatedId === murdererChar.name ||
+            session.votingState.eliminatedId === murdererChar.characterId
+          ) {
             outcome = 'investigators_win';
           } else {
             // Wrong person voted out or abstain - check if killer wins
             const remainingInvestigators = game.players.filter(p =>
               p.isConnected &&
-              p.playerId !== murdererPlayerId &&
+              p.playerId !== murdererChar.playerId &&
               p.playerId !== session.votingState.eliminatedId
             );
             
@@ -276,7 +295,7 @@ const gameHandler = (io, socket) => {
             setTimeout(async () => {
               try {
                 const { buildFinalRevealPrompt } = await import('../prompts/investigation.prompt.js');
-                const aiService = await import('../services/ai.service.js');
+                const OllamaService = (await import('../ai/ollama.service.js')).default;
                 
                 const fakeVotes = [];
                 for (const [voterId, votedId] of session.votingState.votes.entries()) {
@@ -295,11 +314,14 @@ const gameHandler = (io, socket) => {
 
                 let finalText = "The investigators failed to reach a conclusion in time. The killer slipped away into the night, leaving the case unresolved forever.";
                 
-                if (aiService.aiClient) {
-                   const aiPromise = aiService.aiClient.generateCompletion(revealPrompt);
-                   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000));
+                try {
+                   const aiClient = new OllamaService();
+                   const aiPromise = aiClient.generateCompletion(revealPrompt);
+                   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 15000));
                    const res = await Promise.race([aiPromise, timeoutPromise]);
                    finalText = res.response || res.result || res;
+                } catch (err) {
+                   console.error("[Ollama Final Reveal error]", err.message);
                 }
                 
                 session.finalReveal = finalText;
@@ -423,6 +445,7 @@ const gameHandler = (io, socket) => {
   socket.on('player:move', handlePlayerMove);
   socket.on('meeting:call', handleCallMeeting);
   socket.on('send-chat', handleSendChat);
+  socket.on('game:play-again', handlePlayAgain);
   socket.on('player:suspect', handlePlayerSuspect);
   socket.on('meeting:vote', handleMeetingVote);
   socket.on('meeting:end', handleMeetingEnd);

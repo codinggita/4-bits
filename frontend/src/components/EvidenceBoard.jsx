@@ -1,6 +1,9 @@
-import { Pin } from "lucide-react";
+import { useState } from "react";
+import { Pin, Share, Lightbulb } from "lucide-react";
 
-export default function EvidenceBoard({ clues, suspects }) {
+export default function EvidenceBoard({ clues, suspects, myCharName, onShareClue, onDeduceClues }) {
+  const [selectedClues, setSelectedClues] = useState([]);
+
   // Pre-calculated offsets for slightly chaotic paper angles
   const rotations = ["rotate-[-1.5deg]", "rotate-[1deg]", "rotate-[-0.5deg]", "rotate-[1.5deg]", "rotate-[-2deg]", "rotate-[2deg]"];
   
@@ -159,18 +162,72 @@ export default function EvidenceBoard({ clues, suspects }) {
                   </p>
                 </div>
 
-                {/* Target suspect marker label */}
-                <div className="flex items-center justify-between border-t border-stone-850 pt-1 text-[8px] font-typewriter">
-                  <span className="text-stone-500">LINK:</span>
-                  <span className={`${pinColor} font-bold truncate max-w-[120px]`}>
-                    {linkedSuspect}
-                  </span>
+                <div className="mt-2 flex flex-col gap-1">
+                  {/* Target suspect marker label */}
+                  <div className="flex items-center justify-between border-t border-stone-850 pt-1 text-[8px] font-typewriter">
+                    <span className="text-stone-500">LINK:</span>
+                    <span className={`${pinColor} font-bold truncate max-w-[120px]`}>
+                      {linkedSuspect}
+                    </span>
+                  </div>
+                  
+                  {/* Deduction Selection */}
+                  <div className="flex items-center gap-1 text-[9px] font-typewriter">
+                    <input 
+                      type="checkbox" 
+                      id={`select-${clue.id}`}
+                      className="cursor-pointer"
+                      checked={selectedClues.includes(clue.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          if (selectedClues.length < 2) setSelectedClues([...selectedClues, clue.id]);
+                        } else {
+                          setSelectedClues(selectedClues.filter(id => id !== clue.id));
+                        }
+                      }}
+                      disabled={!selectedClues.includes(clue.id) && selectedClues.length >= 2}
+                    />
+                    <label htmlFor={`select-${clue.id}`} className="cursor-pointer text-stone-300">Select for Deduction</label>
+                  </div>
+                  
+                  {/* Privacy / Share logic */}
+                  {!clue.isShared && clue.discoveredBy === myCharName && (
+                    <button 
+                      className="mt-1 w-full flex items-center justify-center gap-1 py-0.5 bg-amber-900/40 hover:bg-amber-800/60 border border-amber-900/50 rounded-sm text-[8px] font-typewriter text-amber-100 transition-colors"
+                      onClick={() => onShareClue(clue.id)}
+                    >
+                      <Share className="w-2.5 h-2.5" /> SHARE CLUE
+                    </button>
+                  )}
+                  {clue.isShared && (
+                    <span className="block mt-1 text-[8px] text-center text-emerald-600/70 font-typewriter border border-emerald-900/30 bg-emerald-950/20 py-0.5 rounded-sm">
+                      SHARED PUBLICLY
+                    </span>
+                  )}
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Action Bar for Deductions */}
+      {selectedClues.length === 2 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-3 bg-stone-900/95 border border-amber-900/50 p-3 rounded shadow-[0_4px_12px_rgba(0,0,0,0.8)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
+          <p className="text-[10px] font-typewriter text-stone-300">
+            2 Clues selected
+          </p>
+          <button 
+            onClick={() => {
+              onDeduceClues(selectedClues);
+              setSelectedClues([]);
+            }}
+            className="flex items-center gap-2 bg-amber-900 hover:bg-amber-800 text-amber-50 px-3 py-1.5 rounded-sm text-xs font-serif-display transition-colors"
+          >
+            <Lightbulb className="w-3.5 h-3.5" /> Deduce Connection
+          </button>
+        </div>
+      )}
     </div>
   );
 }

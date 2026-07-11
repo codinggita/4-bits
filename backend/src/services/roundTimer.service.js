@@ -63,7 +63,7 @@ async function endGameWithKillerWin(code, session, game, message) {
   setTimeout(async () => {
       try {
         const { buildFinalRevealPrompt } = await import('../prompts/investigation.prompt.js');
-        const aiService = await import('./ai.service.js');
+        const OllamaService = (await import('../ai/ollama.service.js')).default;
         const revealPrompt = buildFinalRevealPrompt({
           gameContext: session,
           votes: [] 
@@ -71,11 +71,14 @@ async function endGameWithKillerWin(code, session, game, message) {
         
         let finalText = "The investigators failed to reach a conclusion in time. The killer slipped away into the night, leaving the case unresolved forever.";
         
-        if (aiService.aiClient) {
-          const aiPromise = aiService.aiClient.generateCompletion(revealPrompt);
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000));
+        try {
+          const aiClient = new OllamaService();
+          const aiPromise = aiClient.generateCompletion(revealPrompt);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 15000));
           const res = await Promise.race([aiPromise, timeoutPromise]);
           finalText = res.response || res.result || res;
+        } catch (err) {
+          console.error("[Ollama Final Reveal error]", err.message);
         }
         
         session.finalReveal = finalText;

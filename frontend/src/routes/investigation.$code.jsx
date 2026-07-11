@@ -260,6 +260,10 @@ function InvestigationScreen() {
       setClues(newClues);
     });
 
+    sock.on("game:play-again", (data) => {
+      navigate({ to: `/lobby/$code`, params: { code: data.newRoomCode } });
+    });
+
     sock.on("phase-updated", async (newPhase) => {
       setPhase(newPhase);
       const freshSession = await getSessionDetails(code, true);
@@ -453,7 +457,7 @@ function InvestigationScreen() {
     try {
       if (actionType === 'share') {
         if (socket) {
-          socket.emit("chat:send", { text: `Hey everyone, you should come check out the ${actionTarget || hotspot?.name}!` });
+          socket.emit("send-chat", { text: `Hey everyone, you should come check out the ${actionTarget || hotspot?.name}!` });
         }
         setActiveView("chat");
         return;
@@ -473,10 +477,40 @@ function InvestigationScreen() {
   const handleVoteSubmit = async () => {
     if (!myVote) return;
     try {
-      await submitVote(code, playerId, myVote);
+      const targetPlayer = players.find(p => p.name === myVote);
+      const targetId = targetPlayer ? targetPlayer.id : myVote;
+
+      if (socket) {
+        socket.emit("meeting:vote", { targetId });
+      } else {
+        await submitVote(code, playerId, myVote);
+      }
       setVoted(true);
     } catch (err) {
       console.error("Failed to submit vote:", err);
+    }
+  };
+
+  const handlePlayAgain = async () => {
+    if (!session || session.hostId !== playerId) return;
+    try {
+      const { createRoom } = await import('@/lib/rooms');
+      const { code: newCode } = await createRoom({
+        name: session.theme || "New Investigation",
+        mode: "classic_mansion",
+        maxMembers: session.suspects?.length || 5,
+        maxRounds: 3,
+        roundDurationMinutes: 2,
+        revealPolicy: session.revealPolicy || 'immediate',
+        hostName: players.find(p => p.id === playerId)?.name || "Host"
+      });
+      if (socket) {
+        socket.emit("game:play-again", { newRoomCode: newCode });
+      }
+      navigate({ to: `/lobby/$code`, params: { code: newCode } });
+    } catch (e) {
+      console.error("Failed to start new game:", e);
+      alert("Failed to generate a new game. Please try again.");
     }
   };
 
@@ -541,6 +575,31 @@ function InvestigationScreen() {
   const handleEndMeetingHost = () => {
     if (socket) {
       socket.emit('meeting:end');
+    }
+  };
+
+  const handleShareClue = async (clueId) => {
+    try {
+      await submitAction(code, playerId, {
+        type: 'share_clue',
+        target: clueId
+      });
+      // A meeting:action or round:action event from socket should refresh clues
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeduceClues = async (clueIds) => {
+    if (clueIds.length !== 2) return;
+    try {
+      await submitAction(code, playerId, {
+        type: 'deduce',
+        target: clueIds.join(',')
+      });
+      // The socket event should refresh clues automatically
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -767,18 +826,27 @@ function InvestigationScreen() {
     </div>
   );
 
+  const visibleClues = clues.filter(c => c.isShared || c.discoveredBy === myChar?.name);
+
   const renderEvidencePanel = () => (
     <div className="h-full flex flex-col border-l border-stone-850 bg-[color:var(--color-bg-base)]">
       <div className="p-4 border-b border-stone-850">
         <span className="font-typewriter text-[10px] text-[color:var(--color-text-tertiary)]">Evidence & Clues</span>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {clues.length === 0 && (
+        {visibleClues.length === 0 && (
           <p className="text-xs text-[color:var(--color-text-tertiary)] text-center py-8 font-typewriter">No evidence discovered yet.</p>
         )}
-        {clues.map(c => (
-          <div key={c.id} className="p-3 border border-stone-850 bg-stone-900/40">
-            <p className="font-serif-display text-md text-amber-50/90">{c.title}</p>
+        {visibleClues.map(c => (
+          <div key={c.id} className="p-3 border border-stone-850 bg-stone-900/40 relative">
+            <div className="flex justify-between items-start">
+              <p className="font-serif-display text-md text-amber-50/90 pr-2">{c.title}</p>
+              {c.isShared ? (
+                <span className="text-[8px] bg-emerald-900/40 text-emerald-500 border border-emerald-800/50 px-1 rounded-sm flex-shrink-0">SHARED</span>
+              ) : (
+                <span className="text-[8px] bg-stone-800 text-stone-400 border border-stone-700 px-1 rounded-sm flex-shrink-0">PRIVATE</span>
+              )}
+            </div>
             <p className="text-xs text-stone-400 mt-2 font-courier leading-relaxed">{c.rawDescription || c.description}</p>
           </div>
         ))}
@@ -1032,8 +1100,14 @@ function InvestigationScreen() {
               )}
 
               {activeView === "corkboard" && (
-                <div className="flex-1 p-2 overflow-y-auto">
-                  <EvidenceBoard clues={clues} suspects={suspects} />
+                <div className="absolute inset-0 bg-stone-900 overflow-hidden flex items-center justify-center">
+                  <EvidenceBoard 
+                    clues={visibleClues} 
+                    suspects={suspects} 
+                    myCharName={myChar?.name} 
+                    onShareClue={handleShareClue}
+                    onDeduceClues={handleDeduceClues}
+                  />
                 </div>
               )}
 
@@ -1277,10 +1351,17 @@ function InvestigationScreen() {
             <div className="prose prose-invert text-[color:var(--color-text-secondary)] leading-relaxed font-serif text-md space-y-4 whitespace-pre-line">
               {finalReveal || "Generating case file reveal..."}
             </div>
-            <div className="pt-8">
+            <div className="pt-8 flex gap-4">
               <Link to="/" className="inline-block border border-[color:var(--color-border-hairline)] text-xs tracked-caps px-6 py-3 hover:bg-[color:var(--color-bg-elevated)] text-[color:var(--color-text-primary)] transition-colors">
                 Return to Title Screen
               </Link>
+              {session?.hostId === playerId && (
+                <button 
+                  onClick={handlePlayAgain}
+                  className="inline-block border border-[color:var(--color-accent-blood)] text-xs tracked-caps px-6 py-3 bg-[color:var(--color-accent-blood)] text-[color:var(--color-text-primary)] hover:bg-[color:var(--color-accent-blood-hover)] transition-colors">
+                  Play Again (New Story)
+                </button>
+              )}
             </div>
           </div>
         </div>

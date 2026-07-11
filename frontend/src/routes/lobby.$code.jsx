@@ -149,12 +149,15 @@ function Lobby() {
   }
 
   const me = players.find((p) => p.playerId === playerId);
-  const isHost = playerId === room.hostId;
   const maxPlayers = room.settings?.maxPlayers || 8;
   const minPlayers = room.settings?.minPlayers || 4;
-  const meetsMin = players.length >= minPlayers;
+  const isHost = room?.hostId === playerId;
+  const isStarted = room?.status === "started";
+  const isEnded = room?.status === "ended";
+
   const allReady = players.length > 0 && players.every((p) => p.isReady);
-  const canBegin = isHost && meetsMin && allReady && room.status !== "started";
+  const meetsMin = players.length >= minPlayers;
+  const canBegin = isHost && allReady && meetsMin && !isStarted && !isEnded;
 
   const onToggleReady = async () => {
     if (!me || !socketRef.current) return;
@@ -313,6 +316,8 @@ function Lobby() {
               cursor: canBegin ? "pointer" : "not-allowed"
             }}
             title={
+            isEnded ?
+            "This case has already been closed." :
             !meetsMin ?
             `Need at least ${minPlayers} investigators` :
             !allReady ?
@@ -325,9 +330,15 @@ function Lobby() {
           }
         </div>
 
-        {room.status === "started" &&
+        {isStarted &&
         <p className="mt-6 text-sm text-[color:var(--color-text-secondary)]">
             The investigation has begun.
+          </p>
+        }
+
+        {isEnded &&
+        <p className="mt-6 text-sm text-[color:var(--color-accent-blood)]">
+            This case file has been closed. Please create a new game.
           </p>
         }
 

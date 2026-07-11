@@ -50,6 +50,8 @@ export const getDiscoveredClues = async (roomCode) => {
       linkedCharacters: e.linkedCharacters,
       rawDescription: e.description,
       isRedHerring: e.isRedHerring,
+      discoveredBy: e.discoveredBy,
+      isShared: e.isShared,
       description: `${e.type || 'Evidence'} · ${e.description} (Location: ${e.location})`
     }));
 };
