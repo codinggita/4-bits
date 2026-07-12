@@ -66,9 +66,27 @@ export default class LandingScene extends Phaser.Scene {
         { skinTone: 0xffe0bd, outfit: 'outfit_casual', outfitColor: 0x047857, hairStyle: 'hair_bob', hairColor: 0xca8a04 }
       ];
       
-      const sprite = new PlayerSprite(this, pos.x, pos.y, apps[i]);
+      let app = apps[i];
+      if (i === 1) { // Center character tracks the player's custom appearance
+        app = this.registry.get('landing_appearance') || app;
+      }
+
+      const sprite = new PlayerSprite(this, pos.x, pos.y, app);
       sprite.playAnim(pos.dir);
       if (pos.flip) sprite.setFlipX(true);
+      
+      if (i === 1) {
+        const onAppearanceChange = (parent, key, data) => {
+          if (key === 'landing_appearance' && sprite.active) {
+            sprite.setAppearance(data);
+            sprite.playAnim(pos.dir); // Refresh animation for new textures
+          }
+        };
+        this.registry.events.on('changedata', onAppearanceChange);
+        this.events.once('shutdown', () => {
+          this.registry.events.off('changedata', onAppearanceChange);
+        });
+      }
 
       // Rhythmic "dance" tween (smooth bobbing and gentle rotation instead of rapid flipping)
       this.tweens.add({

@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { generateGameTextures } from '../utils/textureGenerator';
 import PlayerSprite, { registerPlayerAnimations } from '../entities/PlayerSprite';
 
@@ -27,7 +28,7 @@ export default class ProfileScene extends Phaser.Scene {
     const cy = this.cameras.main.height / 2;
     
     this.sprite = new PlayerSprite(this, cx, cy, app);
-    this.sprite.setScale(8); // Huge scale for preview
+    this.sprite.setScale(5.5); // Large scale for preview, but fits in canvas
     
     this.facingDirs = ['walk_down', 'walk_left', 'walk_right', 'walk_up'];
     this.dirIndex = this.registry.get('direction') || 0;
@@ -35,14 +36,21 @@ export default class ProfileScene extends Phaser.Scene {
     this.sprite.setFlipX(this.facingDirs[this.dirIndex] === 'walk_left');
 
     // Listen for registry changes to update live
-    this.registry.events.on('changedata', (parent, key, data) => {
+    const onChange = (parent, key, data) => {
+      if (!this.sprite || !this.sprite.active) return;
       if (key === 'appearance') {
         this.sprite.setAppearance(data);
+        this.sprite.playAnim(this.facingDirs[this.dirIndex]);
       } else if (key === 'direction') {
         this.dirIndex = data;
         this.sprite.playAnim(this.facingDirs[this.dirIndex]);
         this.sprite.setFlipX(this.facingDirs[this.dirIndex] === 'walk_left');
       }
+    };
+
+    this.registry.events.on('changedata', onChange);
+    this.events.once('shutdown', () => {
+      this.registry.events.off('changedata', onChange);
     });
   }
 }

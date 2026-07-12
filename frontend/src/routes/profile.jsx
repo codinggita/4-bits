@@ -88,7 +88,7 @@ function Profile() {
 
   return (
     <main className="min-h-[100dvh] bg-[color:var(--color-bg-base)] px-4 py-8 md:py-12 flex flex-col items-center relative overflow-x-hidden overflow-y-auto">
-      <LandingCanvas reduceMotion={reduceMotionGlobal} focusRoom="bedroom" />
+      <LandingCanvas reduceMotion={reduceMotionGlobal} customAppearance={appearance} />
       
       <div className="mx-auto max-w-4xl w-full z-10 relative flex flex-col h-full">
         <Link
@@ -114,7 +114,7 @@ function Profile() {
                 roomCode="PROFILE" 
                 playerId="me" 
                 players={[{ playerId: "me", name: displayName }]} 
-                customRegistry={{ ...appearance, direction }}
+                customRegistry={{ appearance, direction }}
               />
             </div>
             

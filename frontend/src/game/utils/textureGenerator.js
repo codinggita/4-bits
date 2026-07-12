@@ -112,17 +112,31 @@ export function generateGameTextures(scene) {
     const SHADE = '#cccccc';
     const yOff = (frameNum !== 0) ? -1 : 0;
     
-    if (dir === 0 || dir === 3) {
-      pxRect(ctx, 3, 8 + yOff, 10, 11, OUTLINE);
-      pxRect(ctx, 4, 9 + yOff, 8, 9, COLOR);
-      pxRect(ctx, 10, 9 + yOff, 2, 9, SHADE);
+    if (dir === 1 || dir === 2) {
+      // Side view back arm
+      pxRect(ctx, 6, 9 + yOff, 4, 8, OUTLINE);
+      pxRect(ctx, 7, 10 + yOff, 2, 6, SHADE);
+      // Torso (Longer for coat)
+      pxRect(ctx, 4, 8 + yOff, 8, 12, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 10, COLOR);
+      pxRect(ctx, 8, 9 + yOff, 2, 10, SHADE);
+      // Side view front arm
+      let armY = 9 + yOff;
+      pxRect(ctx, 5, armY, 4, 8, OUTLINE);
+      pxRect(ctx, 6, armY+1, 2, 6, COLOR);
+    } else {
+      // Arms (Front / Back)
+      pxRect(ctx, 2, 9 + yOff, 3, 8, OUTLINE);
+      pxRect(ctx, 3, 10 + yOff, 1, 6, COLOR);
+      pxRect(ctx, 11, 9 + yOff, 3, 8, OUTLINE);
+      pxRect(ctx, 12, 10 + yOff, 1, 6, SHADE);
+      // Torso (Longer for coat)
+      pxRect(ctx, 4, 8 + yOff, 8, 12, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 10, COLOR);
+      pxRect(ctx, 9, 9 + yOff, 2, 10, SHADE);
       if (dir === 0) { // Open collar
         pxRect(ctx, 7, 9 + yOff, 2, 4, '#000000');
       }
-    } else {
-      pxRect(ctx, 4, 8 + yOff, 8, 11, OUTLINE);
-      pxRect(ctx, 5, 9 + yOff, 6, 9, COLOR);
-      pxRect(ctx, 9, 9 + yOff, 2, 9, SHADE);
     }
   };
 
@@ -130,17 +144,21 @@ export function generateGameTextures(scene) {
     const COLOR = '#ffffff'; 
     const SHADE = '#cccccc';
     const yOff = (frameNum !== 0) ? -1 : 0;
-    if (dir === 0 || dir === 3) {
-      pxRect(ctx, 4, 8 + yOff, 8, 7, OUTLINE);
-      pxRect(ctx, 5, 9 + yOff, 6, 5, COLOR);
-      pxRect(ctx, 9, 9 + yOff, 2, 5, SHADE);
+    // Vest doesn't have sleeves, so we ONLY draw the torso!
+    if (dir === 1 || dir === 2) {
+      // Torso only
+      pxRect(ctx, 4, 8 + yOff, 8, 9, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 7, COLOR);
+      pxRect(ctx, 8, 9 + yOff, 2, 7, SHADE);
+    } else {
+      // Torso only
+      pxRect(ctx, 4, 8 + yOff, 8, 9, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 7, COLOR);
+      pxRect(ctx, 9, 9 + yOff, 2, 7, SHADE);
       if (dir === 0) { // Vest V-neck
         pxRect(ctx, 7, 9 + yOff, 2, 3, '#000000');
         pxRect(ctx, 7, 13 + yOff, 2, 1, '#110b0d'); // Button
       }
-    } else {
-      pxRect(ctx, 5, 8 + yOff, 6, 7, OUTLINE);
-      pxRect(ctx, 6, 9 + yOff, 4, 5, COLOR);
     }
   };
   
@@ -148,14 +166,28 @@ export function generateGameTextures(scene) {
     const COLOR = '#ffffff'; 
     const SHADE = '#cccccc';
     const yOff = (frameNum !== 0) ? -1 : 0;
-    if (dir === 0 || dir === 3) {
-      pxRect(ctx, 3, 8 + yOff, 10, 7, OUTLINE);
-      pxRect(ctx, 4, 9 + yOff, 8, 5, COLOR);
-      pxRect(ctx, 10, 9 + yOff, 2, 5, SHADE);
+    if (dir === 1 || dir === 2) {
+      // Side view back arm (short sleeve)
+      pxRect(ctx, 6, 9 + yOff, 4, 4, OUTLINE);
+      pxRect(ctx, 7, 10 + yOff, 2, 2, SHADE);
+      // Torso
+      pxRect(ctx, 4, 8 + yOff, 8, 9, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 7, COLOR);
+      pxRect(ctx, 8, 9 + yOff, 2, 7, SHADE);
+      // Side view front arm (short sleeve)
+      let armY = 9 + yOff;
+      pxRect(ctx, 5, armY, 4, 4, OUTLINE);
+      pxRect(ctx, 6, armY+1, 2, 2, COLOR);
     } else {
-      pxRect(ctx, 4, 8 + yOff, 8, 7, OUTLINE);
-      pxRect(ctx, 5, 9 + yOff, 6, 5, COLOR);
-      pxRect(ctx, 9, 9 + yOff, 2, 5, SHADE);
+      // Arms (short sleeves)
+      pxRect(ctx, 2, 9 + yOff, 3, 4, OUTLINE);
+      pxRect(ctx, 3, 10 + yOff, 1, 2, COLOR);
+      pxRect(ctx, 11, 9 + yOff, 3, 4, OUTLINE);
+      pxRect(ctx, 12, 10 + yOff, 1, 2, SHADE);
+      // Torso
+      pxRect(ctx, 4, 8 + yOff, 8, 9, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 7, COLOR);
+      pxRect(ctx, 9, 9 + yOff, 2, 7, SHADE);
     }
   };
 
@@ -164,18 +196,31 @@ export function generateGameTextures(scene) {
     const SHADE = '#cccccc';
     const yOff = (frameNum !== 0) ? -1 : 0;
     
-    // Suit jacket
-    if (dir === 0 || dir === 3) {
-      pxRect(ctx, 3, 8 + yOff, 10, 9, OUTLINE);
-      pxRect(ctx, 4, 9 + yOff, 8, 7, COLOR);
-      pxRect(ctx, 10, 9 + yOff, 2, 7, SHADE);
+    if (dir === 1 || dir === 2) {
+      // Side view back arm (long sleeve)
+      pxRect(ctx, 6, 9 + yOff, 4, 7, OUTLINE);
+      pxRect(ctx, 7, 10 + yOff, 2, 5, SHADE);
+      // Torso (slightly longer)
+      pxRect(ctx, 4, 8 + yOff, 8, 10, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 8, COLOR);
+      pxRect(ctx, 8, 9 + yOff, 2, 8, SHADE);
+      // Side view front arm
+      let armY = 9 + yOff;
+      pxRect(ctx, 5, armY, 4, 7, OUTLINE);
+      pxRect(ctx, 6, armY+1, 2, 5, COLOR);
+    } else {
+      // Arms (long sleeves)
+      pxRect(ctx, 2, 9 + yOff, 3, 7, OUTLINE);
+      pxRect(ctx, 3, 10 + yOff, 1, 5, COLOR);
+      pxRect(ctx, 11, 9 + yOff, 3, 7, OUTLINE);
+      pxRect(ctx, 12, 10 + yOff, 1, 5, SHADE);
+      // Torso
+      pxRect(ctx, 4, 8 + yOff, 8, 10, OUTLINE);
+      pxRect(ctx, 5, 9 + yOff, 6, 8, COLOR);
+      pxRect(ctx, 9, 9 + yOff, 2, 8, SHADE);
       if (dir === 0) { // Tie
         pxRect(ctx, 7, 9 + yOff, 2, 5, '#110b0d');
       }
-    } else {
-      pxRect(ctx, 4, 8 + yOff, 8, 9, OUTLINE);
-      pxRect(ctx, 5, 9 + yOff, 6, 7, COLOR);
-      pxRect(ctx, 9, 9 + yOff, 2, 7, SHADE);
     }
   };
 
@@ -234,6 +279,9 @@ export function generateGameTextures(scene) {
 
   generateSpriteLayer('hair_short', drawHairShort);
   generateSpriteLayer('hair_slicked', drawHairSlicked);
+  generateSpriteLayer('hair_bob', drawHairBob);
+  generateSpriteLayer('hair_long', drawHairLong);
+  generateSpriteLayer('hair_none', () => {}); // Empty layer
 
 
   // 2. Generate 36-Tile Spritesheet (256x192px = 8x6 grid of 32x32 tiles)

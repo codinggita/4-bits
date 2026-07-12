@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Player from '../entities/Player';
+import { registerPlayerAnimations } from '../entities/PlayerSprite';
 import { generateGameTextures, generateTilemapJSON } from '../utils/textureGenerator';
 
 export default class LobbyScene extends Phaser.Scene {
@@ -34,32 +35,7 @@ export default class LobbyScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
     // 1. Create Walk Animations
-    if (!this.anims.exists('walk_down')) {
-      this.anims.create({
-        key: 'walk_down',
-        frames: this.anims.generateFrameNumbers('character_spritesheet', { start: 0, end: 2 }),
-        frameRate: 8,
-        repeat: -1
-      });
-      this.anims.create({
-        key: 'walk_left',
-        frames: this.anims.generateFrameNumbers('character_spritesheet', { start: 3, end: 5 }),
-        frameRate: 8,
-        repeat: -1
-      });
-      this.anims.create({
-        key: 'walk_right',
-        frames: this.anims.generateFrameNumbers('character_spritesheet', { start: 6, end: 8 }),
-        frameRate: 8,
-        repeat: -1
-      });
-      this.anims.create({
-        key: 'walk_up',
-        frames: this.anims.generateFrameNumbers('character_spritesheet', { start: 9, end: 11 }),
-        frameRate: 8,
-        repeat: -1
-      });
-    }
+    registerPlayerAnimations(this.anims);
 
     // 2. Load Tiled Map
     const map = this.make.tilemap({ key: 'lobby_map' });
