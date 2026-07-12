@@ -108,10 +108,10 @@ export default class LandingScene extends Phaser.Scene {
     }
     
     positions.forEach(pos => {
-      // Soft spotlights for characters
+      // Soft spotlights for characters (anchored at their feet)
       for (let r = 100; r > 0; r -= 25) {
         overlay.fillStyle(0xffffff, 0.2);
-        overlay.fillCircle(pos.x, pos.y, r);
+        overlay.fillCircle(pos.x, pos.y + 16, r);
       }
     });
     
@@ -136,9 +136,9 @@ export default class LandingScene extends Phaser.Scene {
     // Draw warm ambient spotlights over the dancing characters
     positions.forEach(pos => {
       this.glow.fillStyle(0xfcd34d, 0.1);
-      this.glow.fillCircle(pos.x, pos.y, 90);
+      this.glow.fillCircle(pos.x, pos.y + 16, 90);
       this.glow.fillStyle(0xfcd34d, 0.15);
-      this.glow.fillCircle(pos.x, pos.y, 40);
+      this.glow.fillCircle(pos.x, pos.y + 16, 40);
     });
 
     // Subtle Flicker animation (more stable and less intense)
